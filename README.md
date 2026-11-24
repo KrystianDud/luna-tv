@@ -32,8 +32,8 @@ The receiver driver operates **inside this app only**. It does not turn the rece
 | A/B/X/Y, D-pad, bumpers, LT/RT and both sticks | Confirmed by the tester in browser diagnostics |
 | Luna UK desktop layout | Corrected clipping; validated after complete page loads |
 | Game streaming | Unsupported-browser, decode and network warnings; very low frame rate reported |
-| Login persistence across restart | Not yet verified |
-| Public firmware import UI | Builds and validation tests pass; TV picker flow not yet hardware-tested |
+| Login persistence | Existing sign-in survived the tested in-place debug update |
+| Public firmware path | File-backed native startup verified; TV document-picker flow remains untested |
 
 The hardware results above came from the private 0.2.x prototype. Public 0.3.0 replaces its embedded receiver firmware with a user-supplied firmware import. See [compatibility notes](docs/COMPATIBILITY.md).
 
