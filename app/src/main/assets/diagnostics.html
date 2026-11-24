@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<title>Controller and browser check</title>
+<style>
+body{margin:0;padding:28px 42px;background:#10121c;color:#edf0ff;font:18px system-ui,sans-serif}
+h1{font-size:30px;margin:0 0 8px}h2{font-size:21px;margin:20px 0 10px}
+p{color:#c0c4d9;line-height:1.45;margin:8px 0}main{display:grid;grid-template-columns:1fr 1.2fr;gap:32px}
+section{background:#1d2030;border-radius:12px;padding:20px}dl{display:grid;grid-template-columns:1fr 1fr;gap:10px}dd{margin:0}
+.yes{color:#9de4bb}.no{color:#ffbd9d}.buttons{display:flex;gap:6px;flex-wrap:wrap}
+.button{min-width:42px;padding:8px;border:1px solid #666b83;border-radius:7px;text-align:center;font-size:15px}
+.pressed{background:#b6a3ff;color:#10121c}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+#axes{font-variant-numeric:tabular-nums}small{font-size:13px;color:#a4a9c1}
+</style>
+<h1>Controller and browser check</h1>
+<p>Press A on your paired Xbox controller. Move both sticks and squeeze both triggers.<br>Hold View ⧉ for one second, then release, or press Back on the TV remote for options.</p>
+<main>
+<section><h2>Browser capabilities</h2><dl id="capabilities"></dl><small id="agent"></small>
+<p>These checks show browser features, not Luna compatibility or streaming performance.</p></section>
+<section><h2 id="status">Waiting for controller…</h2><p id="mapping"></p><div class="buttons" id="buttons"></div><pre id="axes"></pre>
+<p id="hint">If nothing appears, check TV Bluetooth pairing, press A again, and update Android System WebView.</p></section>
+</main>
+<script>
+'use strict';
+const capabilities = document.getElementById('capabilities');
+function row(name, supported) {
+  const label = document.createElement('dt'); label.textContent = name;
+  const value = document.createElement('dd'); value.textContent = supported ? 'Available' : 'Unavailable';
+  value.className = supported ? 'yes' : 'no'; capabilities.append(label, value);
+}
+const video = document.createElement('video');
+row('Secure context', window.isSecureContext);
+row('Gamepad API', typeof navigator.getGamepads === 'function');
+row('WebRTC', typeof RTCPeerConnection === 'function');
+row('H.264 video declaration', !!video.canPlayType('video/mp4; codecs="avc1.42E01E"'));
+row('VP9 video declaration', !!video.canPlayType('video/webm; codecs="vp9"'));
+row('Fullscreen API', document.fullscreenEnabled);
+document.getElementById('agent').textContent = navigator.userAgent;
+const labels = ['A','B','X','Y','LB','RB','LT','RT','View','Menu','LS','RS','↑','↓','←','→','Xbox'];
+let identity = '', nodes = [], previousText = '';
+function update() {
+  let pads = [];
+  try { pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : []; } catch (_) {}
+  const pad = pads[0];
+  if (pad) {
+    const nextIdentity = pad.index + ':' + pad.id + ':' + pad.buttons.length;
+    if (identity !== nextIdentity) {
+      identity = nextIdentity;
+      document.getElementById('status').textContent = pad.id;
+      document.getElementById('mapping').textContent = 'Mapping: ' + (pad.mapping || 'device-specific') + ' · Controller ' + (pad.index + 1);
+      document.getElementById('hint').textContent = pad.mapping === 'standard'
+        ? 'Standard mapping detected. Each button should light up independently.'
+        : 'Non-standard mapping: labels below are button numbers. Luna must support this mapping.';
+      const container = document.getElementById('buttons'); container.replaceChildren();
+      nodes = Array.from(pad.buttons, (_, i) => {
+        const el = document.createElement('div'); el.className = 'button';
+        el.textContent = pad.mapping === 'standard' ? (labels[i] || String(i)) : String(i);
+        container.append(el); return el;
+      });
+    }
+    pad.buttons.forEach((button, i) => nodes[i].classList.toggle('pressed', button.pressed || button.value > 0.15));
+    const next = 'Axes: ' + Array.from(pad.axes, (v, i) => i + ': ' + v.toFixed(2)).join('  ')
+      + '\nLT: ' + (pad.buttons[6]?.value ?? 0).toFixed(2) + '    RT: ' + (pad.buttons[7]?.value ?? 0).toFixed(2);
+    if (next !== previousText) { document.getElementById('axes').textContent = next; previousText = next; }
+  } else if (identity) {
+    identity = ''; previousText = '';
+    document.getElementById('status').textContent = 'Controller disconnected';
+    document.getElementById('buttons').replaceChildren(); document.getElementById('axes').textContent = '';
+  }
+  requestAnimationFrame(update);
+}
+requestAnimationFrame(update);
+</script>
+</html>

@@ -1,0 +1,15 @@
+.gradle/
+**/build/
+app/.cxx/
+local.properties
+*.jks
+*.keystore
+.DS_Store
+.private/
+dist/
+verification/
+app/src/main/cpp/xow/dongle/firmware.cpp
+*.bin
+*.cab
+.env
+.env.*
